@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="stats">
+  <div><b>{{ stats.total }}</b><span>Total members</span></div>
+  <div><b>{{ stats.delivered }}</b><span>Delivered</span></div>
+  <div><b>{{ stats.pending }}</b><span>Pending</span></div>
+  <div><b>Rs. {{ '{:,.0f}'.format(stats.due_total) }}</b><span>Total amount due</span></div>
+</div>
+
+<form class="search" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search by Member Code, Name, Mobile or Account No" autofocus>
+  <select name="status">
+    <option value="">All status</option>
+    {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if s == status }}>{{ s }}</option>{% endfor %}
+  </select>
+  <button class="btn">Search</button>
+  {% if q or status %}<a class="btn ghost" href="{{ url_for('main.index') }}">Clear</a>{% endif %}
+</form>
+
+{% if pagination.items %}
+<p class="muted">
+  {{ pagination.total }} record(s) found ·
+  <a href="{{ url_for('main.export', q=q, status=status) }}">Export {{ 'these results' if (q or status) else 'all' }} to Excel</a>
+</p>
+
+<form id="bulk" method="post" action="{{ url_for('main.bulk') }}" class="bulkbar">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <span>With selected rows:</span>
+  <select name="action">
+    <option value="delivered">Mark Delivered</option>
+    <option value="pending">Mark Pending</option>
+  </select>
+  <input name="delivered_to" maxlength="120" placeholder="Received by (optional)">
+  <button class="btn small">Apply</button>
+</form>
+
+<div class="table-wrap">
+<table>
+  <thead><tr>
+    <th><input type="checkbox" id="selall" title="Select all on this page"></th>
+    <th>Branch Name</th><th>Member Code</th><th>Member Name</th><th>Mobile</th><th>Account No</th>
+    <th>Open Date</th><th>Close Date</th><th>Due</th><th>Policy Amt</th><th>Amount Due</th>
+    <th>Dist Status</th><th>Delivered To</th><th>Mob</th><th>KYC</th><th>Remark</th><th>Delivered On</th><th>Action</th>
+  </tr></thead>
+  <tbody>
+  {% for r in pagination.items %}
+  <tr>
+    <td><input type="checkbox" name="ids" value="{{ r.id }}" form="bulk"></td>
+    <td>{{ r.branch_name }}</td>
+    <td>{{ r.member_code }}</td>
+    <td>{{ r.member_name }}</td>
+    <td>{{ r.member_mobile }}</td>
+    <td>{{ r.account_number }}</td>
+    <td>{{ r.open_date }}</td>
+    <td>{{ r.close_date }}</td>
+    <td class="num">{{ r.due }}</td>
+    <td class="num">{{ '{:,.2f}'.format(r.policy_amt or 0) }}</td>
+    <td class="num {{ 'due' if r.amount_due else '' }}">{{ '{:,.2f}'.format(r.amount_due or 0) }}</td>
+    <td><span class="badge {{ r.dist_status|lower }}">{{ r.dist_status }}</span></td>
+    <td>{{ r.delivered_to }}</td>
+    <td>{{ r.mob }}</td>
+    <td>{{ r.kyc_status }}</td>
+    <td>{{ r.remark }}</td>
+    <td>{{ r.delivered_at.strftime('%d/%m/%Y %H:%M') if r.delivered_at else '' }}</td>
+    <td class="actions-cell">
+      {% if r.dist_status != 'Delivered' %}
+      <form method="post" action="{{ url_for('main.deliver', rid=r.id) }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ request.full_path }}">
+        <input name="delivered_to" maxlength="120" placeholder="Received by" class="mini">
+        <button class="btn small ok">Delivered</button>
+      </form>
+      {% else %}
+      <form method="post" action="{{ url_for('main.undo_delivery', rid=r.id) }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ request.full_path }}">
+        <button class="btn small ghost">Undo</button>
+      </form>
+      {% endif %}
+      <a class="btn small" href="{{ url_for('main.edit', rid=r.id) }}">Update</a>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<div class="pager">
+  {% if pagination.has_prev %}<a class="btn small ghost" href="{{ url_for('main.index', q=q, status=status, page=pagination.prev_num) }}">← Prev</a>{% endif %}
+  <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}<a class="btn small ghost" href="{{ url_for('main.index', q=q, status=status, page=pagination.next_num) }}">Next →</a>{% endif %}
+</div>
+<script>
+  document.getElementById('selall').addEventListener('change', function () {
+    document.querySelectorAll('input[name=ids]').forEach(function (box) { box.checked = this.checked; }, this);
+  });
+</script>
+{% else %}
+<div class="card empty">
+  {% if q or status %}No records match your search.
+  {% else %}No data yet. <a href="{{ url_for('main.upload') }}">Upload an Excel file</a> to begin.{% endif %}
+</div>
+{% endif %}
+{% endblock %}

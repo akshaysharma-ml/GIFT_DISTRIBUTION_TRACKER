@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}My account · Gift Tracker{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>Change password</h1>
+  <p class="muted">Signed in as <b>{{ current_user.username }}</b> ({{ 'Admin' if current_user.is_admin else current_user.branch }})</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Current password <input type="password" name="current_password" required autocomplete="current-password"></label>
+    <label>New password <input type="password" name="new_password" minlength="6" required autocomplete="new-password"></label>
+    <label>Confirm new password <input type="password" name="confirm_password" minlength="6" required autocomplete="new-password"></label>
+    <button class="btn">Change password</button>
+  </form>
+</div>
+{% endblock %}

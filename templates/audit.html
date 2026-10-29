@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}History · Gift Tracker{% endblock %}
+{% block content %}
+<form class="search" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Filter by user, action, member code or name">
+  <button class="btn">Filter</button>
+  {% if q %}<a class="btn ghost" href="{{ url_for('main.audit') }}">Clear</a>{% endif %}
+</form>
+
+{% if pagination.items %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>When</th><th>User</th><th>Action</th><th>Member</th><th>Details</th></tr></thead>
+  <tbody>
+  {% for h in pagination.items %}
+  <tr>
+    <td>{{ h.at.strftime('%d/%m/%Y %H:%M') }}</td>
+    <td>{{ h.user }}</td>
+    <td>{{ h.action }}</td>
+    <td>{% if h.member_name %}{{ h.member_name }} ({{ h.member_code }}){% endif %}</td>
+    <td class="wrap">{{ h.details }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<div class="pager">
+  {% if pagination.has_prev %}<a class="btn small ghost" href="{{ url_for('main.audit', q=q, page=pagination.prev_num) }}">← Newer</a>{% endif %}
+  <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}<a class="btn small ghost" href="{{ url_for('main.audit', q=q, page=pagination.next_num) }}">Older →</a>{% endif %}
+</div>
+{% else %}
+<div class="card empty">No history found.</div>
+{% endif %}
+{% endblock %}

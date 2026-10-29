@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Users · Gift Tracker{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Add user</h1>
+  <form method="post" action="{{ url_for('main.add_user') }}" class="grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Username <input name="username" required minlength="3" maxlength="60" autocomplete="off"></label>
+    <label>Password <input type="password" name="password" required minlength="6" autocomplete="new-password"></label>
+    <label>Branch
+      <select name="branch">{% for b in branches %}<option>{{ b }}</option>{% endfor %}</select>
+    </label>
+    <label>Role
+      <select name="role"><option value="user">User</option><option value="admin">Admin (all branches)</option></select>
+    </label>
+    <div class="actions wide"><button class="btn">Create user</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <h1>All users</h1>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Username</th><th>Role</th><th>Branch</th><th>Status</th><th>Reset password</th><th></th></tr></thead>
+    <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.username }}</td>
+      <td>{{ u.role }}</td>
+      <td>{{ u.branch }}</td>
+      <td>
+        {% if not u.is_active %}<span class="badge pending">Disabled</span>
+        {% elif u.locked_until and u.locked_until > now %}<span class="badge pending">Locked</span>
+        {% else %}<span class="badge delivered">Active</span>{% endif %}
+      </td>
+      <td>
+        <form method="post" action="{{ url_for('main.reset_password', uid=u.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="password" name="password" placeholder="New password" minlength="6" required autocomplete="new-password">
+          <button class="btn small">Change</button>
+        </form>
+      </td>
+      <td class="actions-cell">
+        {% if u.id != current_user.id %}
+        <form method="post" action="{{ url_for('main.toggle_user', uid=u.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn small ghost">{{ 'Disable' if u.is_active else 'Enable' }}</button>
+        </form>
+        <form method="post" action="{{ url_for('main.delete_user', uid=u.id) }}" class="inline"
+              onsubmit="return confirm('Delete user {{ u.username }}?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn small danger">Delete</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Update {{ rec.member_name }} · Gift Tracker{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>{{ rec.member_name }} <small class="muted">{{ rec.member_code }}</small></h1>
+  {% if rec.dist_status == 'Delivered' %}
+  <div class="flash warning">Already delivered{% if rec.delivered_at %} on {{ rec.delivered_at.strftime('%d/%m/%Y %H:%M') }}{% endif %}{% if rec.delivered_to %} to {{ rec.delivered_to }}{% endif %}.</div>
+  {% endif %}
+  <dl class="info">
+    <div><dt>Branch</dt><dd>{{ rec.branch_name }}</dd></div>
+    <div><dt>Account No</dt><dd>{{ rec.account_number }}</dd></div>
+    <div><dt>Mobile</dt><dd>{{ rec.member_mobile }}</dd></div>
+    <div><dt>Open Date</dt><dd>{{ rec.open_date }}</dd></div>
+    <div><dt>Close Date</dt><dd>{{ rec.close_date }}</dd></div>
+    <div><dt>Amount Due</dt><dd><b>Rs. {{ '{:,.2f}'.format(rec.amount_due or 0) }}</b></dd></div>
+    <div><dt>Delivered On</dt><dd>{{ rec.delivered_at.strftime('%d/%m/%Y %H:%M') if rec.delivered_at else '—' }}</dd></div>
+    <div><dt>Last updated</dt><dd>{% if rec.updated_at %}{{ rec.updated_by }} · {{ rec.updated_at.strftime('%d/%m/%Y %H:%M') }}{% else %}—{% endif %}</dd></div>
+  </dl>
+
+  <form method="post" class="grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Due (pending instalments) <input type="number" name="due" min="0" step="1" value="{{ rec.due or 0 }}" required></label>
+    <label>Policy Amt <input type="number" name="policy_amt" min="0" step="0.01" value="{{ rec.policy_amt or 0 }}" required></label>
+    <label>Dist Status
+      <select name="dist_status">
+        {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if s == rec.dist_status }}>{{ s }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Delivered To <input name="delivered_to" maxlength="120" value="{{ rec.delivered_to or '' }}" placeholder="Who received the gift"></label>
+    <label>Mob (receiver) <input name="mob" maxlength="30" value="{{ rec.mob or '' }}" inputmode="tel"></label>
+    <label>KYC Status
+      <select name="kyc_status">
+        <option value=""></option>
+        {% for s in kyc_statuses %}<option value="{{ s }}" {{ 'selected' if s == rec.kyc_status }}>{{ s }}</option>{% endfor %}
+        {% if rec.kyc_status and rec.kyc_status not in kyc_statuses %}<option selected>{{ rec.kyc_status }}</option>{% endif %}
+      </select>
+    </label>
+    <label class="wide">Remark
+      <input name="remark" list="remarks" maxlength="255" value="{{ rec.remark or '' }}">
+      <datalist id="remarks">{% for o in remark_options %}<option value="{{ o }}">{% endfor %}</datalist>
+      <small class="muted">Amount Due = Policy Amt × Due is calculated on save. Clear the remark to auto-generate it.</small>
+    </label>
+    <div class="actions wide">
+      <button class="btn">Save</button>
+      <a class="btn ghost" href="{{ url_for('main.index', q=rec.member_code) }}">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h1>History</h1>
+  {% if history %}
+  <ul class="history">
+    {% for h in history %}
+    <li><span class="muted">{{ h.at.strftime('%d/%m/%Y %H:%M') }}</span> · <b>{{ h.user }}</b> · {{ h.action }}{% if h.details %} — {{ h.details }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">No changes recorded yet.</p>{% endif %}
+</div>
+
+{% if current_user.is_admin %}
+<div class="card danger-zone">
+  <form method="post" action="{{ url_for('main.delete_record', rid=rec.id) }}"
+        onsubmit="return confirm('Delete this record permanently?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn danger">Delete this record</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

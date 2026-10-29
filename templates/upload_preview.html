@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Confirm upload · Gift Tracker{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Preview: {{ filename }}</h1>
+  <p class="muted">Nothing is saved yet. Check the numbers, then confirm.</p>
+  <div class="stats">
+    <div><b>{{ stats.new }}</b><span>New records</span></div>
+    <div><b>{{ stats.update }}</b><span>Existing, will be updated</span></div>
+    <div><b>{{ skipped }}</b><span>Skipped (blank code/name)</span></div>
+    <div><b>{{ other_branch + stats.blocked }}</b><span>Ignored (other branch)</span></div>
+  </div>
+  {% if missing_policy %}
+  <div class="flash warning">{{ missing_policy }} row(s) have Due &gt; 0 but no Policy Amt, so their Amount Due will be 0 until you fill the policy amount.</div>
+  {% endif %}
+
+  <h2>First {{ sample|length }} of {{ total }} rows</h2>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Branch</th><th>Member Code</th><th>Member Name</th><th>Account No</th><th>Due</th><th>Policy Amt</th><th>Dist Status</th></tr></thead>
+    <tbody>
+    {% for r in sample %}
+    <tr>
+      <td>{{ r.branch_name }}</td><td>{{ r.member_code }}</td><td>{{ r.member_name }}</td>
+      <td>{{ r.account_number }}</td><td class="num">{{ r.due }}</td>
+      <td class="num">{{ '{:,.2f}'.format(r.policy_amt) if r.policy_amt is not none else '' }}</td>
+      <td>{{ r.dist_status }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  <div class="actions" style="margin-top:16px">
+    <form method="post" action="{{ url_for('main.upload_confirm') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="token" value="{{ token }}">
+      <button class="btn">Confirm &amp; Import</button>
+    </form>
+    <form method="post" action="{{ url_for('main.upload_cancel') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="token" value="{{ token }}">
+      <button class="btn ghost">Cancel</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

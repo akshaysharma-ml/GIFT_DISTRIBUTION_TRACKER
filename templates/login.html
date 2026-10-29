@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Login · Gift Tracker{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>🎁 Gift Tracker</h1>
+  <p class="muted">Sign in to continue</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Username <input name="username" required autofocus autocomplete="username"></label>
+    <label>Password <input type="password" name="password" required autocomplete="current-password"></label>
+    <button class="btn">Login</button>
+  </form>
+</div>
+{% endblock %}

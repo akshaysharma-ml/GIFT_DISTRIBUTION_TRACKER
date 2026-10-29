@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Gift Tracker{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% if current_user.is_authenticated %}
+<header class="nav">
+  <a class="brand" href="{{ url_for('main.index') }}">🎁 Gift Tracker</a>
+  <nav>
+    <a href="{{ url_for('main.index') }}">Search</a>
+    <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('main.upload') }}">Upload Excel</a>
+    {% if current_user.is_admin %}
+      <a href="{{ url_for('main.users') }}">Users</a>
+      <a href="{{ url_for('main.audit') }}">History</a>
+    {% endif %}
+  </nav>
+  <form method="post" action="{{ url_for('main.logout') }}" class="logout">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <a href="{{ url_for('main.account') }}" class="who">{{ current_user.username }} · {{ 'Admin' if current_user.is_admin else current_user.branch }}</a>
+    <button class="btn small ghost">Logout</button>
+  </form>
+</header>
+{% endif %}
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Upload · Gift Tracker{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Upload Excel</h1>
+  <p class="muted">First row must be the header. Required columns: <b>Member Code</b>, <b>Member Name</b>.<br>
+  Supported: Branch Name, Member Code, Member Name, Member Mobile Number, Account Number, Open Date, Close Date,
+  Due, Policy Amt, Amount Due, Dist Status, Delivered To, Mob, KYC Status, Remark.</p>
+  {% if not current_user.is_admin %}<p class="muted">Only rows of your branch (<b>{{ current_user.branch }}</b>) are imported; other rows are ignored.</p>{% endif %}
+  <p class="muted">You will see a preview before anything is saved. Re-uploading updates existing rows (matched by Member Code + Account Number) and keeps delivery details already saved in the app.</p>
+  <form method="post" enctype="multipart/form-data" class="upload">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="file" name="file" accept=".xlsx,.xlsm,.csv" required>
+    <button class="btn">Upload &amp; Preview</button>
+  </form>
+</div>
+
+<div class="card">
+  <h1>Backup</h1>
+  <p class="muted">Download everything you can see as an Excel file. It can be uploaded again to restore the data.</p>
+  <a class="btn ghost" href="{{ url_for('main.export') }}">Download full backup</a>
+</div>
+
+{% if current_user.is_admin %}
+<div class="card danger-zone">
+  <h1>Delete data</h1>
+  <p class="muted">Removes records permanently (users are not affected). Download a backup first.</p>
+  <form method="post" action="{{ url_for('main.clear_data') }}" class="upload"
+        onsubmit="return confirm('This permanently deletes records. Continue?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <select name="scope" required>
+      <option value="">Choose…</option>
+      <option value="all">All branches</option>
+      {% for b in branches %}<option value="{{ b }}">{{ b }} only</option>{% endfor %}
+    </select>
+    <input name="confirm" placeholder="Type DELETE" autocomplete="off" required>
+    <button class="btn danger">Delete records</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

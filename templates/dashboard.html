@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Gift Tracker{% endblock %}
+{% block content %}
+<div class="stats">
+  <div><b>{{ totals.total }}</b><span>Total members</span></div>
+  <div><b>{{ totals.delivered }} ({{ totals.percent }}%)</b><span>Delivered</span></div>
+  <div><b>{{ totals.pending }}</b><span>Pending</span></div>
+  <div><b>{{ totals.with_due }}</b><span>Members with dues</span></div>
+  <div><b>Rs. {{ '{:,.0f}'.format(totals.due_total) }}</b><span>Total amount due</span></div>
+  <div><b>{{ totals.kyc_open }}</b><span>KYC not done</span></div>
+</div>
+
+<div class="card">
+  <h1>Branch-wise</h1>
+  {% if branches %}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Branch</th><th>Members</th><th>Delivered</th><th>Pending</th><th>Progress</th><th>With dues</th><th>Amount due</th><th>KYC not done</th></tr></thead>
+    <tbody>
+    {% for b in branches %}
+    <tr>
+      <td>{{ b.name }}</td>
+      <td class="num">{{ b.total }}</td>
+      <td class="num">{{ b.delivered }}</td>
+      <td class="num">{{ b.pending }}</td>
+      <td><div class="bar" title="{{ b.percent }}%"><span style="width: {{ b.percent }}%"></span></div> {{ b.percent }}%</td>
+      <td class="num">{{ b.with_due }}</td>
+      <td class="num">{{ '{:,.2f}'.format(b.due_total) }}</td>
+      <td class="num">{{ b.kyc_open }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}<p class="muted">No data yet.</p>{% endif %}
+</div>
+
+{% if current_user.is_admin %}
+<div class="card">
+  <h1>Recent activity</h1>
+  {% if recent %}
+  <ul class="history">
+    {% for h in recent %}
+    <li><span class="muted">{{ h.at.strftime('%d/%m/%Y %H:%M') }}</span> · <b>{{ h.user }}</b> · {{ h.action }}{% if h.member_name %} · {{ h.member_name }} ({{ h.member_code }}){% endif %}</li>
+    {% endfor %}
+  </ul>
+  <p><a href="{{ url_for('main.audit') }}">Full history →</a></p>
+  {% else %}<p class="muted">Nothing yet.</p>{% endif %}
+</div>
+{% endif %}
+{% endblock %}
